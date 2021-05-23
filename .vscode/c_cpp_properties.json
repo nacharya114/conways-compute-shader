@@ -3,7 +3,6 @@
         {
             "name": "Win32",
             "includePath": [
-                "$(workspaceFolder)",
                 "${workspaceFolder}/dependencies/GLFW/include",
                 "${workspaceFolder}/dependencies/GLAD/include",
                 "${workspaceFolder}/dependencies/GLM"
@@ -19,7 +18,7 @@
                 ]
             },
             "windowsSdkVersion": "10.0.17763.0",
-            "compilerPath": "C:/MinGW/bin/gcc.exe",
+            "compilerPath": "C:/mingw32/bin/gcc.exe",
             "cStandard": "c11",
             "cppStandard": "c++11",
             "intelliSenseMode": "gcc-x86"

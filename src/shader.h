@@ -1,33 +1,30 @@
-#ifndef __SHADER__
-#define __SHADER__
+#ifndef SHADER_H
+#define SHADER_H
 
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-#include <iostream>
+#include <string>
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
-// Creates a new shader program.
 class Shader
 {
-private:
-    unsigned int shaderProgram;
-
-    unsigned int vertexShaderID;
-    const char* vertexShaderSource;
-
-    unsigned int fragmentShaderID;
-    const char* fragmentShaderSource;
-
 public:
-    // Sets the vertex shader of this program.
-    bool setVertexShader(std::string a_vertexShaderSource);
-    bool setFragmentShader(std::string a_fragmentShaderSource);
-    int getUniformLocation(std::string a_uniformName);
-    int compile();
+    // the program ID
+    unsigned int ID;
+  
+    // constructor reads and builds the shader
+    Shader(const char* vertexPath, const char* fragmentPath);
+    Shader(const char* computePath);
+
+    // use/activate the shader
     void use();
+    // utility uniform functions
+    void setBool(const std::string &name, bool value) const;  
+    void setInt(const std::string &name, int value) const;   
+    void setFloat(const std::string &name, float value) const;
+    void setmat4(const std::string &name, glm::mat4 &value) const;
 
 private:
-    std::string loadShaderSource(std::string a_pathToShaderSourceFile);
-    bool shaderCompiled(unsigned int a_id);
+    void checkErrors(unsigned int shader, std::string type);
 };
-
+  
 #endif

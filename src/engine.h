@@ -1,5 +1,6 @@
 // System libs.
 #include <iostream>
+#include <vector>
 
 // Include libs.
 #include <glad\glad.h>
@@ -8,7 +9,7 @@
 #include <glm/glm.hpp>
 
 // Header includes.
-// TODO: Include your headers here...
+#include "shader.h"
 
 // Function prototypes.
 void WindowResize(GLFWwindow* a_window, int a_width, int a_height);
@@ -27,6 +28,12 @@ private:
     const char* windowName = "Default Name";
 
     GLFWwindow* window;
+    
+    //Textures
+    std::vector<unsigned int*> textures;
+
+    //Shaders
+    Shader* quadshader;
 
     // Game loop.
     float lastFrameTime = 0.0f;
@@ -43,4 +50,5 @@ public:
 private:
     // OpenGL
     void SetupOpenGlRendering();
+    void computeInfo();
 };

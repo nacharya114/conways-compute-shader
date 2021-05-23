@@ -1,8 +1,9 @@
 #include "engine.h"
 
 int main()
-{
-    Engine engine(640, 480, "OpenGL preset by Guylian Gilsing");
+{   
+
+    Engine engine(800, 600, "OpenGL preset by Guylian Gilsing");
 
     if(!engine.Initialize())
     {
