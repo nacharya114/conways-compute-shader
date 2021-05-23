@@ -1,0 +1,1 @@
+./builds/windows/main.exe
