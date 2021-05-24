@@ -11,9 +11,14 @@
 Shader::Shader(const char* vertexPath, const char* fragmentPath)
 {
     // 1. retrieve the vertex/fragment source code from filePath
-    printf("in shader class: \n%s\n", pathToStr(vertexPath));
-    const char* vShaderCode = pathToStr(vertexPath).data();
-    const char* fShaderCode = pathToStr(fragmentPath).data();
+    
+    std::string vShaderStr = pathToStr(vertexPath);
+    const char* vShaderCode = vShaderStr.c_str();
+    printf("in shader class: \n %s \n", vShaderCode);
+
+    std::string fShaderStr = pathToStr(fragmentPath);
+    const char* fShaderCode = fShaderStr.c_str();
+
 
     // 2. compile shaders
     unsigned int vertex, fragment;

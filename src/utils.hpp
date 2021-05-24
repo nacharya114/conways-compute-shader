@@ -25,15 +25,11 @@ std::string pathToStr(const char* filePath){
         inputStream.close();
         // convert stream into string
         codeOutput   = ss.str();	
-        std::cout << codeOutput << std::endl;
     }
     catch(std::ifstream::failure e)
     {
         std::cout << "ERROR::IO::FILE_NOT_SUCCESFULLY_READ:" << filePath  << std::endl;
     }
-    printf(".data output: \n%s\n",codeOutput.data());
-    std::cout << std::endl;
-    printf(".c_str output: \n%s\n", codeOutput.c_str());
     return codeOutput;
 }
 
