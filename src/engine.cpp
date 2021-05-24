@@ -2,6 +2,22 @@
 
 #include "stb_image.h"
 
+//Constants
+// Vertex Data
+float vertices[] = {
+    // vert points  //texCoords
+    -1.0f, -1.0f,   0.0f, 0.0f,     // bottom left
+    -1.0f,  1.0f,   0.0f, 1.0f,     // top left
+     1.0f, -1.0f,   1.0f, 0.0f,     // bottom right
+     1.0f,  1.0f,   1.0f, 1.0f,     // top right
+};
+
+//Indices
+unsigned int indices[] ={
+    0, 1, 2,
+    1, 2, 3
+};
+
 Engine::Engine(int a_width, int a_height, const char* a_windowName)
 {
     this->screenWidth = a_width;
@@ -55,7 +71,7 @@ int Engine::Initialize()
 
     // Set the viewport
 
-    glViewport(0, 0, this->screenWidth, this->screenHeight);
+    // glViewport(0, 0, this->screenWidth, this->screenHeight);
 
     // Setup callbacks.
 
@@ -110,7 +126,7 @@ void Engine::SetupOpenGlRendering()
 {
     // Load image data for startup and texture
 
-    unsigned int texture_output;
+    static unsigned int texture_output;
     glGenTextures(1, &texture_output);
     glBindTexture(GL_TEXTURE_2D, texture_output);
 
@@ -135,13 +151,39 @@ void Engine::SetupOpenGlRendering()
         std::cout << "Failed to load texture" << std::endl;
     }
     stbi_image_free(data);
+
+
+    glViewport(0, 0, width, height);
+
     this->textures.push_back(&texture_output);
 
     //Make Shader
-    Shader shader ("src/shaders/shader.vs", "src/shaders/shader.fs");
+    static Shader shader ("src/shaders/shader.vert", "src/shaders/shader.frag");
+    shader.use();
     this->quadshader = &shader;
 
-    glViewport(0, 0, width, height);
+    // ..:: Initialization code (done once (unless your object frequently changes)) :: ..
+    glGenVertexArrays(1, &VAO); 
+    glGenBuffers(1, &VBO);
+
+    // 1. bind Vertex Array Object
+    glBindVertexArray(VAO);
+    // 2. copy our vertices array in a buffer for OpenGL to use
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    // vertex position attribute
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    //vertex texture position attribute
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+    glEnableVertexAttribArray(1); 
+    
+    glGenBuffers(1, &EBO);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW); 
 
     this->computeInfo();
 }
@@ -149,11 +191,15 @@ void Engine::SetupOpenGlRendering()
 void Engine::Update(float a_deltaTime)
 {
     // TODO: Update your logic here...
+      
 }
 
 void Engine::Draw()
 {
-    // TODO: Render your stuff here...
+    // TODO: Render your stuff here..
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 
 void Engine::computeInfo() {

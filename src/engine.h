@@ -1,4 +1,6 @@
 // System libs.
+#ifndef ENGINE_H
+#define ENGINE_H
 #include <iostream>
 #include <vector>
 
@@ -35,6 +37,9 @@ private:
     //Shaders
     Shader* quadshader;
 
+    // Buffers and array objects
+    unsigned int VAO, VBO, EBO;
+
     // Game loop.
     float lastFrameTime = 0.0f;
     glm::vec3 clearColor = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -52,3 +57,5 @@ private:
     void SetupOpenGlRendering();
     void computeInfo();
 };
+
+#endif

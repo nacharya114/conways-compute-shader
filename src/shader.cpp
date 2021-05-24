@@ -14,7 +14,6 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath)
     
     std::string vShaderStr = pathToStr(vertexPath);
     const char* vShaderCode = vShaderStr.c_str();
-    printf("in shader class: \n %s \n", vShaderCode);
 
     std::string fShaderStr = pathToStr(fragmentPath);
     const char* fShaderCode = fShaderStr.c_str();
