@@ -3,7 +3,7 @@
 int main()
 {   
 
-    Engine engine(800, 600, "OpenGL preset by Guylian Gilsing");
+    Engine engine(512, 512, "Conway's Game of Life");
 
     if(!engine.Initialize())
     {

@@ -30,7 +30,7 @@ int Engine::Initialize()
     // Initialize GLFW.
     glfwInit();
 
-    // Tell GLFW that we want to use OpenGL 3.3
+    // Tell GLFW that we want to use OpenGL 4.3
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 
@@ -71,7 +71,7 @@ int Engine::Initialize()
 
     // Set the viewport
 
-    // glViewport(0, 0, this->screenWidth, this->screenHeight);
+    glViewport(0, 0, this->screenWidth, this->screenHeight);
 
     // Setup callbacks.
 
@@ -90,9 +90,6 @@ int Engine::Initialize()
 
         glfwPollEvents();
         this->ProcessInput(this->window);
-
-        glClearColor(this->clearColor.x, this->clearColor.y, this->clearColor.z, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
 
         // Application logic
         this->Update(m_deltaTime);
@@ -116,6 +113,7 @@ void WindowResize(GLFWwindow* a_window, int a_width, int a_height)
 void Engine::ProcessInput(GLFWwindow* a_window)
 {
     // TODO: Process your input here...
+    // std::cin.get(); 
 
     // If the escape key gets pressed, close the window.
     if(glfwGetKey(a_window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
@@ -124,42 +122,58 @@ void Engine::ProcessInput(GLFWwindow* a_window)
 
 void Engine::SetupOpenGlRendering()
 {
-    // Load image data for startup and texture
+    // Load image data for startup and input texture
 
-    static unsigned int texture_output;
-    glGenTextures(1, &texture_output);
-    glBindTexture(GL_TEXTURE_2D, texture_output);
+    // glGenTextures(1, &input_texture);
+    // glActiveTexture(GL_TEXTURE0);
+    // glBindTexture(GL_TEXTURE_2D, input_texture);
 
-    // set the texture wrapping/filtering options (on the currently bound texture object)
+    // // set the texture wrapping/filtering options (on the currently bound texture object)
+    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);  
+    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    // int nrChannels;
+    // unsigned char *data = stbi_load("resources/images/gameoflife.jpg", &screenWidth, &screenHeight, &nrChannels, 0);
+
+    // if (data)
+    // {   
+    //     //Load image data to texture
+    //     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, screenWidth, screenHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, data); // replace data gere
+    //     glBindImageTexture(0, input_texture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA);
+    //     // glGenerateMipmap(GL_TEXTURE_2D);
+
+    // }
+    // else
+    // {
+    //     std::cout << "Failed to load texture" << std::endl;
+    // }
+    // stbi_image_free(data);
+    // glBindTexture(GL_TEXTURE_2D, 0);
+
+    // Set up output texture
+    glGenTextures(1, &output_texture);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, output_texture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);  
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    int width, height, nrChannels;
-    unsigned char *data = stbi_load("resources/images/gameoflife.jpg", &width, &height, &nrChannels, 0);
-
-    if (data)
-    {   
-        //Load image data to texture
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-
-    }
-    else
-    {
-        std::cout << "Failed to load texture" << std::endl;
-    }
-    stbi_image_free(data);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, screenWidth, screenHeight, 0, GL_RGBA, GL_FLOAT,
+    NULL);
+    glBindImageTexture(1, output_texture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 
 
-    glViewport(0, 0, width, height);
+    glViewport(0, 0, screenWidth, screenHeight);
 
-    this->textures.push_back(&texture_output);
+    //Make comp shader
+    static Shader c_shader("src/shaders/shader.comp");
+    this->compShader = &c_shader;
+    this->compShader->setInt("output_texture", 0);
 
-    //Make Shader
+    //Make Quad Shader
     static Shader shader ("src/shaders/shader.vert", "src/shaders/shader.frag");
-    shader.use();
     this->quadshader = &shader;
 
     // ..:: Initialization code (done once (unless your object frequently changes)) :: ..
@@ -186,17 +200,35 @@ void Engine::SetupOpenGlRendering()
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW); 
 
     this->computeInfo();
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, output_texture);
+    this->quadshader->setInt("myTexture", 0);
 }
 
 void Engine::Update(float a_deltaTime)
 {
     // TODO: Update your logic here...
-      
+
+
+    { // launch compute shaders!
+
+    this->compShader->use();
+    glDispatchCompute((GLuint)screenWidth, (GLuint)screenHeight, 1);
+    }
+
+    glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 }
 
 void Engine::Draw()
 {
     // TODO: Render your stuff here..
+    glClearColor(this->clearColor.x, this->clearColor.y, this->clearColor.z, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+    this->quadshader->use();
+    // glActiveTexture(GL_TEXTURE0);
+    // glBindTexture(GL_TEXTURE_2D, input_texture);
+
     glBindVertexArray(VAO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);

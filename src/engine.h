@@ -24,18 +24,19 @@ public:
     float gameSpeed = 0.1f;
 
 private:
-    int screenWidth = 800;
-    int screenHeight = 600;
+    int screenWidth = 512;
+    int screenHeight = 512;
 
     const char* windowName = "Default Name";
 
     GLFWwindow* window;
     
     //Textures
-    std::vector<unsigned int*> textures;
+    unsigned int input_texture, output_texture;
 
     //Shaders
     Shader* quadshader;
+    Shader* compShader;
 
     // Buffers and array objects
     unsigned int VAO, VBO, EBO;

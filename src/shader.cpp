@@ -53,20 +53,23 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath)
 
 Shader::Shader(const char* computePath){
     // Get Shader code
-    const char* cshaderCode = pathToStr(computePath).data();
+    std::string cShaderStr = pathToStr(computePath);
+    const char* cShaderCode = cShaderStr.c_str();
 
     this->ID = glCreateProgram();
-    GLuint cshader;
-    glShaderSource(cshader, 1, &cshaderCode, NULL);
+    GLuint cshader = glCreateShader(GL_COMPUTE_SHADER);
+    glShaderSource(cshader, 1, &cShaderCode, NULL);
     glCompileShader(cshader);
+    this->checkErrors(cshader, "COMPUTE");
     glAttachShader(this->ID, cshader);
     glLinkProgram(this->ID);
-    this->checkErrors(ID, "COMPUTE");
+    this->checkErrors(ID, "PROGRAM");
     glDeleteShader(cshader);
 
 }
 
 void Shader::use(){
+    // std::cout << "Using ID: " << ID << std::endl;
     glUseProgram(ID);
 }
 
