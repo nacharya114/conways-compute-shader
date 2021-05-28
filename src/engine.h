@@ -32,7 +32,7 @@ private:
     GLFWwindow* window;
     
     //Textures
-    unsigned int input_texture, output_texture;
+    unsigned int input_image, output_texture;
 
     //Shaders
     Shader* quadshader;

@@ -124,37 +124,48 @@ void Engine::SetupOpenGlRendering()
 {
     // Load image data for startup and input texture
 
-    // glGenTextures(1, &input_texture);
-    // glActiveTexture(GL_TEXTURE0);
-    // glBindTexture(GL_TEXTURE_2D, input_texture);
+    glGenTextures(1, &input_image);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, input_image);
 
-    // // set the texture wrapping/filtering options (on the currently bound texture object)
-    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);  
-    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    // set the texture wrapping/filtering options (on the currently bound texture object)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);  
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    // int nrChannels;
-    // unsigned char *data = stbi_load("resources/images/gameoflife.jpg", &screenWidth, &screenHeight, &nrChannels, 0);
+    int nrChannels;
+    unsigned char *data = stbi_load("resources/images/gameoflife.jpg", &screenWidth, &screenHeight, &nrChannels, 4);
 
-    // if (data)
-    // {   
-    //     //Load image data to texture
-    //     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, screenWidth, screenHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, data); // replace data gere
-    //     glBindImageTexture(0, input_texture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA);
-    //     // glGenerateMipmap(GL_TEXTURE_2D);
+    GLenum format;
+    if (nrChannels == 1) {
+      format = GL_RED;
+      std::cout << "GL_RED" << std::endl;
+    } else if (nrChannels == 3) {
+      format = GL_RGB;
+      std::cout << "GL_RGB" << std::endl;
+    } else if (nrChannels == 4) {
+      format = GL_RGBA;
+      std::cout << "GL_RGBA" << std::endl;
+    }
 
-    // }
-    // else
-    // {
-    //     std::cout << "Failed to load texture" << std::endl;
-    // }
-    // stbi_image_free(data);
-    // glBindTexture(GL_TEXTURE_2D, 0);
+    if (data)
+    {   
+        //Load image data to texture
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, screenWidth, screenHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, data); // replace data gere
+        glGenerateMipmap(GL_TEXTURE_2D);
+        glBindImageTexture(2, input_image,  0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
+
+    }
+    else
+    {
+        std::cout << "Failed to load texture" << std::endl;
+    }
+    stbi_image_free(data);
 
     // Set up output texture
     glGenTextures(1, &output_texture);
-    glActiveTexture(GL_TEXTURE0);
+    glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, output_texture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -162,7 +173,7 @@ void Engine::SetupOpenGlRendering()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, screenWidth, screenHeight, 0, GL_RGBA, GL_FLOAT,
     NULL);
-    glBindImageTexture(1, output_texture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+    glBindImageTexture(1, output_texture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
 
 
     glViewport(0, 0, screenWidth, screenHeight);
@@ -170,7 +181,6 @@ void Engine::SetupOpenGlRendering()
     //Make comp shader
     static Shader c_shader("src/shaders/shader.comp");
     this->compShader = &c_shader;
-    this->compShader->setInt("output_texture", 0);
 
     //Make Quad Shader
     static Shader shader ("src/shaders/shader.vert", "src/shaders/shader.frag");
@@ -201,9 +211,10 @@ void Engine::SetupOpenGlRendering()
 
     this->computeInfo();
 
+    this->quadshader->use();
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, output_texture);
-    this->quadshader->setInt("myTexture", 0);
+    glBindTexture(GL_TEXTURE_2D, input_image);
+    this->quadshader->setInt("myTexture", 1);
 }
 
 void Engine::Update(float a_deltaTime)
@@ -215,6 +226,7 @@ void Engine::Update(float a_deltaTime)
 
     this->compShader->use();
     glDispatchCompute((GLuint)screenWidth, (GLuint)screenHeight, 1);
+
     }
 
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
@@ -226,8 +238,14 @@ void Engine::Draw()
     glClearColor(this->clearColor.x, this->clearColor.y, this->clearColor.z, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     this->quadshader->use();
+
     // glActiveTexture(GL_TEXTURE0);
-    // glBindTexture(GL_TEXTURE_2D, input_texture);
+    // glBindTexture(GL_TEXTURE_2D, input_image);
+    // this->quadshader->setInt("myTexture", 0);
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, output_texture);
+    this->quadshader->setInt("myTexture", 1);
 
     glBindVertexArray(VAO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
