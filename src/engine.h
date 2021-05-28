@@ -34,6 +34,8 @@ private:
     //Textures
     unsigned int input_image, output_texture;
 
+    unsigned int frame_buffer;
+
     //Shaders
     Shader* quadshader;
     Shader* compShader;

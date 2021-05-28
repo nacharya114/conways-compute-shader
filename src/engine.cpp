@@ -95,6 +95,12 @@ int Engine::Initialize()
         this->Update(m_deltaTime);
         this->Draw();
 
+        // Re-render to framebuffer to swap texture images
+        glBindFramebuffer( GL_FRAMEBUFFER, frame_buffer );
+        glViewport( 0, 0, screenWidth, screenHeight );
+        this->Draw();
+        glBindFramebuffer( GL_FRAMEBUFFER, 0 );
+
         glfwSwapBuffers(this->window);
     }
 
@@ -161,7 +167,7 @@ void Engine::SetupOpenGlRendering()
     {
         std::cout << "Failed to load texture" << std::endl;
     }
-    stbi_image_free(data);
+    // stbi_image_free(data);
 
     // Set up output texture
     glGenTextures(1, &output_texture);
@@ -171,9 +177,10 @@ void Engine::SetupOpenGlRendering()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, screenWidth, screenHeight, 0, GL_RGBA, GL_FLOAT,
-    NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, screenWidth, screenHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE,data);
     glBindImageTexture(1, output_texture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
+
+    stbi_image_free(data);
 
 
     glViewport(0, 0, screenWidth, screenHeight);
@@ -208,6 +215,12 @@ void Engine::SetupOpenGlRendering()
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW); 
+
+    // Frame Buffer for swapping output to input
+    glGenFramebuffers( 1, &frame_buffer );
+    glBindFramebuffer( GL_FRAMEBUFFER, frame_buffer );
+    glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, input_image, 0 );
+    glBindFramebuffer( GL_FRAMEBUFFER, 0 );
 
     this->computeInfo();
 
